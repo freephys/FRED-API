@@ -1,20 +1,51 @@
+# Purpose: Get a time-series through the FRED API and
+#          print summary statistics and graphs of the time-series
+# Date   : October 9th, 2017
+# File   : get_obs_json.py
+# Author : John Tsang
+
+# Compulsory input: api_key and series_id
+# Optional input  : realtime_start, realtime_end, limit, offset,
+#                   sort_order, observation_start, observation_end,
+#                   units, frequency, aggregation_method, 
+#                   output_type, and vintage_dates
+# Please refer to the read-me file for meaning of input parameters.
+# Output: summary statistics (mean, variance, maximum and minimum)
+# Return: a named-tuple Info:
+#         df          : a dataframe containing the time-series
+#         realtime_end: the realtime_end of the time-series
+#         graph       : the matplotlib object of the time-series' graph 
+#         db_data     : a dictionary containing information for database management
+#             name                : series_id of the time-series
+#             n                   : number of observations
+#             n_missing           : number of missing observations
+#             Start date          : Start date of the time-series
+#             End date            : End date of the time-series
+#             Realtime Start date : Realtime start date of the time-series
+#             Realtime End date   : Realtime end date of the time-series
+
 def get_obs_json(api_key, series_id, realtime_start = "",
             realtime_end = "", limit = "", offset = "",
             sort_order = "", observation_start = "", observation_end = "",
             units = "", frequency = "", aggregation_method = "", 
             output_type = "", vintage_dates=""):
+            
+    # Construct the service url and request for getting the time-series from FRED API
     saved_args = locals()
     import urllib3
     http = urllib3.PoolManager()
     service_link  = "https://api.stlouisfed.org/fred/series/observations"
-    
     saved_args['file_type'] = "json"
+    # Send the request to FRED API
     r = http.request('GET', service_link, fields=saved_args)
-    
+            
+    # Check if the request is successful
     if (r.status != 200):
+        # Return and output error if the request is not successful
         print "Error:",r.status
         return r.status
     
+    # Convert the json from the FRED API into pandas dataframe
     import json
     all_data = json.loads(r.data.decode('utf-8'))
     try:
@@ -27,11 +58,9 @@ def get_obs_json(api_key, series_id, realtime_start = "",
     except KeyError:
         print "Header information is missing"
         return DataRetrieveError
-            
-    #header   = all_data.remove("observations") 
+    
+    # Prepare statistical summary        
     header = all_data
-    print header
-    #header_info = data[v]
     import pandas as pd
     import numpy as np
     df = pd.DataFrame(data=data)
@@ -41,6 +70,7 @@ def get_obs_json(api_key, series_id, realtime_start = "",
     n_missing = 0
     df['__m'] = 0
     import decimal
+    # count number of missing observations
     for index in range(0,len_df):
         try:
             df[series_id][index] = float(decimal.Decimal(df[series_id][index]))
@@ -73,6 +103,7 @@ def get_obs_json(api_key, series_id, realtime_start = "",
     print "Maximum                :",df[series_id].max()
     print "Minimum                :",df[series_id].min()
     
+    # Plot graph
     import matplotlib.pyplot as plt
     graph_df = df[['date',series_id]]
     graph_df.set_index('date')
@@ -88,6 +119,7 @@ def get_obs_json(api_key, series_id, realtime_start = "",
     graph.set_ylabel(series_id)
     plt.show()
     
+    # pack return
     import collections
     Info = collections.namedtuple("Info",["df",'realtime_end','graph','db_data'])
     graph_file_name = series_id + ".png"
