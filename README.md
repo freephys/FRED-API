@@ -12,6 +12,15 @@ This API contains functions to retrieve economic time-series from the Federal Re
 6. [License](#License)
 
 ## Database Layout<a name="Database"></a>
+Every unique time-series has its own table. We have one table called **Series_info** containing summary of all time-series.
+
+Schema of **Series_info**: 
+
+(series_id String,n Integer,n_missing Integer,start_date String,end_date String,r_start_date String,r_end_date String,graph_file String, Primary Key (series_id))
+
+Schema of the table corresponding to a time-series (series_id is the ID of the series in the FRED): 
+
+( "date" TIMESTAMP, "realtime_end" TEXT, "realtime_start" TEXT, "series_id" REAL )
 
 ## Usage<a name="Usage"></a>
 Everyone has his/her own API key. Here we use "ABC" as the key.
