@@ -1,4 +1,5 @@
 # FRED-API
-Retrieve, analyze and graph real-time time-series from the Federal Reserve Economic Data
+
+This API contains functions to retrieve economic time-series from the Federal Reserve Economic Data API and store the data using SQL database.
 
 Read-me in progress
